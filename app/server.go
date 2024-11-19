@@ -19,16 +19,24 @@ func main() {
 	defer l.Close()
 
 	fmt.Println("Server is listening on port 8080")
-
+	conn, err := l.Accept()
 	for {
-		conn, err := l.Accept()
 		if err != nil {
 			fmt.Println("Error accepting connection: ", err.Error())
 			os.Exit(1)
 		}
-		_, err = conn.Write([]byte("+PONG\r\n"))
+		defer conn.Close()
+		buf := make([]byte, 1024)
+		n, err := conn.Read(buf)
 		if err != nil {
+			if err.Error() == "EOF" {
+				fmt.Println("Connection closed")
+				break
+			}
 			fmt.Println("Error writing to connection: ", err.Error())
 		}
+		fmt.Println("Received data ", buf[:n])
+
+		conn.Write([]byte("+PONG\r\n"))
 	}
 }
